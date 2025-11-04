@@ -37,10 +37,6 @@ createRoot(document.getElementById('root')!).render(
         <RainbowKitProvider
           theme={customTheme}
           modalSize="compact"
-          appInfo={{
-            appName: 'Giggle DApp',
-            learnMoreUrl: 'https://giggle.com',
-          }}
         >
           <App />
         </RainbowKitProvider>

@@ -1,30 +1,17 @@
-import { http, createConfig } from 'wagmi'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
-import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors'
 
 // 获取 WalletConnect Project ID
-const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID'
+const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'c2a20bfa84a9d441f2b0bfef94244bd5'
 
-export const config = createConfig({
+// 调试信息
+console.log('🔑 WalletConnect Project ID:', projectId)
+
+export const config = getDefaultConfig({
+  appName: 'Giggle DApp',
+  projectId,
   chains: [mainnet, polygon, optimism, arbitrum, base],
-  connectors: [
-    injected(),
-    walletConnect({ 
-      projectId,
-      showQrModal: false, // RainbowKit 会处理 QR 码显示
-    }),
-    coinbaseWallet({
-      appName: 'Web3 Mobile App',
-      preference: 'all', // 支持移动端和桌面端
-    }),
-  ],
-  transports: {
-    [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [optimism.id]: http(),
-    [arbitrum.id]: http(),
-    [base.id]: http(),
-  },
+  ssr: false,
 })
 
 declare module 'wagmi' {
