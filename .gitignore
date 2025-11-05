@@ -16,9 +16,15 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
+.wrangler
 .DS_Store
+functions
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*functions*
+migrations
+*wrangler*
+worker*
