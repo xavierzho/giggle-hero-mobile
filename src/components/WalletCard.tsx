@@ -24,18 +24,18 @@ export function WalletCard() {
         console.log('🔐 钱包已连接，触发登录流程...', { address })
         loginAttempted.current = true // 标记已尝试登录
         setIsLoggingIn(true)
-        
+
         try {
           // 获取 URL 中的邀请码
           const params = new URLSearchParams(window.location.search)
           const inviteCode = params.get('invite')
-          
+
           if (inviteCode) {
             console.log('📨 检测到邀请码:', inviteCode)
           }
-          
+
           console.log('🚀 开始调用 handleLogin...')
-          
+
           // 弹出签名确认 (handleLogin 内部会自动调用 store.setUserInfo)
           await handleLogin(inviteCode || undefined)
         } catch (err) {
@@ -66,7 +66,7 @@ export function WalletCard() {
     return (
       <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
         <div className="container mx-auto max-w-2xl">
-          <div 
+          <div
             className="rounded-[1.5rem] p-6 shadow-2xl"
             style={{
               background: 'linear-gradient(180deg, rgba(24, 26, 33, 0.95) 0%, rgba(24, 26, 33, 0.98) 100%)',
@@ -75,7 +75,7 @@ export function WalletCard() {
           >
             {/* 提示文字 */}
             <div className="text-center mb-4">
-              <p 
+              <p
                 className="text-lg font-semibold"
                 style={{ color: '#89E333' }}
               >
@@ -85,7 +85,7 @@ export function WalletCard() {
 
             {/* 邀请人地址和复制按钮 */}
             <div className="flex gap-3">
-              <div 
+              <div
                 className="flex-1 rounded-lg px-4 py-3 text-white text-sm font-mono overflow-hidden"
                 style={{
                   background: 'rgba(255, 255, 255, 0.1)',
@@ -93,7 +93,7 @@ export function WalletCard() {
               >
                 {userInfo.inviter}
               </div>
-              <Button 
+              <Button
                 onClick={() => {
                   if (userInfo.inviteCode) {
                     const inviteUrl = `${window.location.origin}?invite=${userInfo.inviteCode}`
@@ -119,7 +119,7 @@ export function WalletCard() {
     return (
       <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
         <div className="container mx-auto max-w-2xl">
-          <div 
+          <div
             className="rounded-[1.5rem] p-6 shadow-2xl"
             style={{
               background: 'linear-gradient(180deg, rgba(24, 26, 33, 0.95) 0%, rgba(24, 26, 33, 0.98) 100%)',
@@ -140,7 +140,7 @@ export function WalletCard() {
   return (
     <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
       <div className="container mx-auto max-w-2xl">
-        <div 
+        <div
           className="rounded-[1.5rem] p-6 shadow-2xl"
           style={{
             background: 'linear-gradient(180deg, rgba(24, 26, 33, 0.95) 0%, rgba(24, 26, 33, 0.98) 100%)',
@@ -149,14 +149,14 @@ export function WalletCard() {
         >
           {/* 提示文字 */}
           <div className="text-center mb-4">
-            <p 
+            <p
               className="text-lg font-semibold"
-              style={{ 
-                color: userInfo?.inviter === null ? '#F97950' : '#FCD635'
+              style={{
+                color: userInfo?.inviteCode === null ? '#F97950' : '#FCD635'
               }}
             >
-              {userInfo?.inviter === null 
-                ? '⚠️ 很抱歉～您还未满足需求！⚠️' 
+              {userInfo?.inviteCode === null
+                ? '⚠️ 很抱歉～您还未满足需求！⚠️'
                 : (loading || isLoggingIn ? '正在请求签名授权...' : '连接钱包后生成邀请连接！')
               }
             </p>
@@ -170,9 +170,9 @@ export function WalletCard() {
           {/* 连接钱包按钮 */}
           <ConnectButton.Custom>
             {({ openConnectModal }) => (
-              <Button 
+              <Button
                 onClick={() => {
-                  if (userInfo?.inviter === null) {
+                  if (userInfo?.inviteCode === null) {
                     setShowDialog(true)
                   } else {
                     openConnectModal()
@@ -182,8 +182,8 @@ export function WalletCard() {
                 className="w-full h-14 text-lg"
                 disabled={loading || isLoggingIn}
               >
-                {userInfo?.inviter === null 
-                  ? '获取资格' 
+                {userInfo?.inviteCode === null
+                  ? '获取资格'
                   : (loading || isLoggingIn ? '授权中...' : '连接钱包')
                 }
               </Button>
@@ -193,9 +193,9 @@ export function WalletCard() {
       </div>
 
       {/* 获取资格弹窗 */}
-      <QualificationDialog 
-        isOpen={showDialog} 
-        onClose={() => setShowDialog(false)} 
+      <QualificationDialog
+        isOpen={showDialog}
+        onClose={() => setShowDialog(false)}
       />
     </div>
   )

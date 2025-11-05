@@ -71,3 +71,7 @@ export default defineConfig([
   },
 ])
 ```
+## 生成本地数据库sql
+```
+npx wrangler d1 execute gigglehero --local --command "CREATE TABLE IF NOT EXISTS users (address TEXT PRIMARY KEY,inviter TEXT,invite_code TEXT,created_at TEXT, balance bigint);CREATE INDEX IF NOT EXISTS idx_invite_code ON users(invite_code);"
+```

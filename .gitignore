@@ -18,13 +18,10 @@ dist-ssr
 .idea
 .wrangler
 .DS_Store
-functions
+
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-*functions*
 migrations
-*wrangler*
-worker*

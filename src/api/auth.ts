@@ -1,11 +1,11 @@
-import type { LoginRequest, LoginData, ApiResponse } from './types'
+import type {ApiResponse, LoginData, LoginRequest} from './types'
 
 /**
  * API 基础配置
  * 开发环境使用 Vite 代理 /api
  * 生产环境使用完整 URL
  */
-const API_BASE_URL = import.meta.env.DEV 
+const API_BASE_URL = import.meta.env.DEV
   ? '/api'  // 开发环境：通过 Vite 代理
   : import.meta.env.VITE_API_BASE_URL || '/api'  // 生产环境：完整 URL
 
@@ -25,8 +25,7 @@ async function postRequest<T>(
       body: JSON.stringify(body),
     })
 
-    const data = await response.json()
-    return data
+    return await response.json()
   } catch (error) {
     console.error('API request failed:', error)
     return {
