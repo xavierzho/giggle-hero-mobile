@@ -1,4 +1,4 @@
-import {createPublicClient, http, isAddress, parseEther, verifyMessage} from "viem";
+import {createPublicClient, formatEther, http, isAddress, parseEther, verifyMessage} from "viem";
 import {bsc} from "viem/chains";
 const evm = createPublicClient({
   chain:bsc,
@@ -18,7 +18,7 @@ export interface UserRow {
   inviter: string | null;   // 可能为空
   invite_code: string;
   created_at: string;       // ISO
-  balance: bigint;
+  balance: number;
 }
 export interface CountRow {
   cnt: number;
@@ -104,7 +104,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
       // console.log(countRow);
       resp.count = countRow?.cnt ?? 0;
-      if ((userRow.inviter && isAddress(userRow.inviter)) || userRow.balance > 0n) {
+      if ((userRow.inviter && isAddress(userRow.inviter)) || userRow.balance > 0) {
         resp.inviter = userRow.inviter as `0x${string}`;
         resp.inviteCode = userRow.invite_code
       }
@@ -151,7 +151,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     await exec(
       env.gigglehero,
       "INSERT INTO users (address, inviter, invite_code, created_at, balance) VALUES (?, ?, ?, ?, ?)",
-      [addrLower, inviter, newInviteCode, new Date().toISOString(), balance.toString()]
+      [addrLower, inviter, newInviteCode, new Date().toISOString(), formatEther(balance)]
     );
     return json<LoginData>({
       code: 0,
