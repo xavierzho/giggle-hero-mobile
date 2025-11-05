@@ -60,9 +60,12 @@ export function WalletCard() {
       loginAttempted.current = false // 重置登录尝试标记
     }
   }, [isConnected, logout])
-
+// ✅ 只有非空字符串才算有资格
+  const eligible = !!(userInfo?.inviteCode && String(userInfo.inviteCode).trim().length > 0);
+  const notConnected = !isConnected;
+  const notEligible = isConnected && userInfo && !eligible;
   // 已连接且已登录(有 inviter)显示邀请信息
-  if (isConnected && userInfo && userInfo.inviter !== null) {
+  if (isConnected && userInfo && eligible) {
     return (
       <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
         <div className="container mx-auto max-w-2xl">
@@ -91,15 +94,17 @@ export function WalletCard() {
                   background: 'rgba(255, 255, 255, 0.1)',
                 }}
               >
-                {userInfo.inviter}
+                {userInfo.inviteCode}
               </div>
               <Button
                 onClick={() => {
                   if (userInfo.inviteCode) {
-                    const inviteUrl = `${window.location.origin}?invite=${userInfo.inviteCode}`
-                    navigator.clipboard.writeText(inviteUrl)
-                    // TODO: 显示复制成功提示
-                    console.log('复制邀请链接:', inviteUrl)
+                    if (eligible) {
+                      const inviteUrl = `${window.location.origin}?invite=${userInfo!.inviteCode}`;
+                      navigator.clipboard.writeText(inviteUrl);
+                      // TODO: 显示复制成功提示
+                      console.log('复制邀请链接:', inviteUrl)
+                    }
                   }
                 }}
                 variant="yellow"
@@ -151,19 +156,17 @@ export function WalletCard() {
           <div className="text-center mb-4">
             <p
               className="text-lg font-semibold"
-              style={{
-                color: userInfo?.inviteCode === null ? '#F97950' : '#FCD635'
-              }}
+              style={{ color: notConnected ? '#FCD635' : notEligible ? '#F97950' : '#89E333' }}
             >
-              {userInfo?.inviteCode === null
-                ? '⚠️ 很抱歉～您还未满足需求！⚠️'
-                : (loading || isLoggingIn ? '正在请求签名授权...' : '连接钱包后生成邀请连接！')
-              }
+              {notConnected
+                ? '连接钱包后生成邀请链接！'
+                : notEligible
+                  ? '⚠️ 很抱歉～您还未满足需求！⚠️'
+                  : (loading || isLoggingIn ? '正在请求签名授权...' : '🎉 恭喜您～获得邀请好友资格！')}
             </p>
+
             {(loading || isLoggingIn) && (
-              <p className="text-gray-400 text-sm mt-2">
-                请在钱包中确认签名
-              </p>
+              <p className="text-gray-400 text-sm mt-2">请在钱包中确认签名</p>
             )}
           </div>
 
@@ -172,20 +175,18 @@ export function WalletCard() {
             {({ openConnectModal }) => (
               <Button
                 onClick={() => {
-                  if (userInfo?.inviteCode === null) {
-                    setShowDialog(true)
-                  } else {
-                    openConnectModal()
-                  }
+                  if (notConnected) return openConnectModal();
+                  if (notEligible) return setShowDialog(true); // 打开“获取资格”弹窗
                 }}
                 variant="yellow"
                 className="w-full h-14 text-lg"
                 disabled={loading || isLoggingIn}
               >
-                {userInfo?.inviteCode === null
-                  ? '获取资格'
-                  : (loading || isLoggingIn ? '授权中...' : '连接钱包')
-                }
+                {notConnected
+                  ? '连接钱包'
+                  : notEligible
+                    ? '获取资格'
+                    : (loading || isLoggingIn ? '授权中...' : '已连接')}
               </Button>
             )}
           </ConnectButton.Custom>

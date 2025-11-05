@@ -29,7 +29,7 @@ async function queryOne<T>(
   sql: string,
   binds: unknown[] = []
 ): Promise<T | null> {
-  const stmt = db.prepare(sql).bind(...binds as any[]);
+  const stmt = db.prepare(sql).bind(...binds as unknown[]);
   const row = await stmt.first<T>(); // 返回 null | T
   return (row ?? null) as T | null;
 }
@@ -39,7 +39,7 @@ async function exec(
   sql: string,
   binds: unknown[] = []
 ): Promise<void> {
-  await db.prepare(sql).bind(...binds as any[]).run();
+  await db.prepare(sql).bind(...binds as unknown[]).run();
 }
 
 interface LoginReq {
@@ -158,7 +158,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       msg: "注册并登录成功",
       data: resp,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return json<LoginData>(
       { code: 500, msg: "服务器异常", error: String(err) },
       500
