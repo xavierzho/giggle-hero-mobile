@@ -1,11 +1,17 @@
-import { useState } from 'react'
 import { Users, FileText, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+type TabId = 'invite' | 'rules' | 'mine'
+
 interface Tab {
-  id: string
+  id: TabId
   label: string
   icon: React.ReactNode
+}
+
+interface TabBarProps {
+  activeTab: TabId
+  onTabChange: (tabId: TabId) => void
 }
 
 const tabs: Tab[] = [
@@ -26,9 +32,7 @@ const tabs: Tab[] = [
   }
 ]
 
-export function TabBar() {
-  const [activeTab, setActiveTab] = useState('invite')
-  
+export function TabBar({ activeTab, onTabChange }: TabBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
       <div className="bg-brand-dark shadow-lg">
@@ -37,7 +41,7 @@ export function TabBar() {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => onTabChange(tab.id)}
                 className={cn(
                   "flex flex-col items-center justify-center p-4 transition-all duration-300 relative group",
                   activeTab === tab.id

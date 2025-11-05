@@ -84,9 +84,9 @@ export function getLoginMessage(nonce: string): string {
 }
 
 /**
- * 生成随机 nonce
- * @returns 随机字符串
+ * 生成随机 nonce (使用时间戳)
+ * @returns 时间戳字符串
  */
 export function generateNonce(): string {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36)
+  return Date.now().toString()
 }

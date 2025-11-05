@@ -1,11 +1,13 @@
-import initBg from '@/assets/init.png'
+import { useAuthStore } from '@/store/useAuthStore'
 
 export function Hero() {
+  const backgroundImage = useAuthStore((state) => state.backgroundImage)
+  
   return (
     <div 
-      className="fixed inset-0 z-0 pt-[9.6875rem] pb-[6.25rem] bg-cover bg-center bg-no-repeat"
+      className="fixed inset-x-0 top-[4.9375rem] bottom-[6.5rem] z-0 bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: `url(${initBg})`,
+        backgroundImage: `url(${backgroundImage})`,
       }}
     >
     </div>
