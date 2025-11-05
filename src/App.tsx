@@ -11,7 +11,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'invite' | 'rules' | 'mine'>('invite')
 
   return (
-    <div className="h-screen overflow-hidden bg-brand-dark text-white">
+    <div className="relative h-screen overflow-hidden bg-brand-dark text-white">
       {activeTab === 'invite' && <Hero />}
       <Navbar />
       {activeTab === 'invite' && (
