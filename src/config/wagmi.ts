@@ -1,4 +1,10 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import {
+  bitgetWallet,
+  metaMaskWallet,
+  okxWallet,
+  tokenPocketWallet,
+} from '@rainbow-me/rainbowkit/wallets'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 
 // 获取 WalletConnect Project ID
@@ -12,6 +18,23 @@ export const config = getDefaultConfig({
   projectId,
   chains: [mainnet, polygon, optimism, arbitrum, base],
   ssr: false,
+  wallets: [
+    {
+      groupName: '移动钱包',
+      wallets: [
+        okxWallet,
+        bitgetWallet,
+        metaMaskWallet,
+        (params) => {
+          const wallet = tokenPocketWallet(params)
+          return {
+            ...wallet,
+            name: 'TokenPocket (TP)',
+          }
+        },
+      ],
+    },
+  ],
 })
 
 declare module 'wagmi' {
