@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { useAuthStore } from '@/store/useAuthStore'
 
 interface QualificationDialogProps {
   isOpen: boolean
@@ -6,6 +7,8 @@ interface QualificationDialogProps {
 }
 
 export function QualificationDialog({ isOpen, onClose }: QualificationDialogProps) {
+  const address = useAuthStore((state) => state.userInfo?.address)
+
   if (!isOpen) return null
 
   return (
@@ -38,7 +41,7 @@ export function QualificationDialog({ isOpen, onClose }: QualificationDialogProp
 
           {/* 标题 */}
           <h2 
-            className="text-[26px] font-bold text-center mb-4"
+            className="text-2xl font-bold text-center mb-4"
             style={{ color: '#3CB11F' }}
           >
             绑定后，可获得邀请好友资格！
@@ -51,6 +54,18 @@ export function QualificationDialog({ isOpen, onClose }: QualificationDialogProp
           >
             注：绑定后不可更改，请检查是否您好友钱包地址！（绑定后会有空投奖励给好友）
           </p>
+
+          {/* 绑定钱包信息 */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 rounded-[2rem] bg-[rgba(34,37,45,0.92)] px-6 py-3 text-left text-white shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
+              <div className="flex-shrink-0 text-sm text-white/60">绑定钱包：</div>
+              <div className="flex-1 overflow-hidden">
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-base tracking-wide text-white">
+                  {address ?? '--'}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* 按钮 */}
           <Button

@@ -1,6 +1,8 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type CSSProperties } from 'react'
 import { useAccount, useDisconnect } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { toast } from 'sonner'
+import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLogin } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
@@ -72,6 +74,9 @@ export function WalletCard() {
     eligible && userInfo?.inviteCode
       ? `${origin.replace(/\/$/, '')}/${userInfo.inviteCode}`
       : null;
+  const toastContainerStyle: CSSProperties = {
+    width: 'min(420px, calc(100vw - 2.5rem))',
+  }
   // 已连接且已登录(有 inviter)显示邀请信息
   if (isConnected && userInfo && eligible) {
     return (
@@ -95,25 +100,66 @@ export function WalletCard() {
             </div>
 
             {/* 邀请人地址和复制按钮 */}
-            <div className="flex gap-3">
-              <div
-                className="flex-1 rounded-lg px-4 py-3 text-white text-sm font-mono overflow-hidden"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                {inviteLink ?? '--'}
+            <div className="flex w-full items-center gap-3">
+              <div className="flex-1 min-w-0 rounded-[2rem] bg-[rgba(34,37,45,0.92)] px-5 py-4 text-left text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+                <div className="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-sm tracking-wide text-white">
+                  {inviteLink ?? '--'}
+                </div>
               </div>
               <Button
-                onClick={() => {
-                  if (inviteLink) {
-                    navigator.clipboard.writeText(inviteLink);
-                    // TODO: 显示复制成功提示
-                    console.log('复制邀请链接:', inviteLink)
+                onClick={async () => {
+                  if (!inviteLink) return
+                  try {
+                    await navigator.clipboard.writeText(inviteLink)
+                    toast.custom(() => (
+                      <div
+                        className="rounded-2xl bg-[#1f222c] p-4 text-left text-white shadow-[0_12px_35px_rgba(0,0,0,0.45)]"
+                        style={toastContainerStyle}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2fbf71] text-white">
+                            <Check className="h-5 w-5" strokeWidth={3} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-base font-semibold">邀请链接已复制</div>
+                            <div className="mt-1 truncate text-xs text-white/65">{inviteLink}</div>
+                          </div>
+                        </div>
+                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="toast-progress h-full w-full rounded-full bg-[#FCD635]"
+                            style={{ '--toast-progress-duration': '2800ms' } as CSSProperties}
+                          />
+                        </div>
+                      </div>
+                    ), { duration: 2800 })
+                  } catch (err) {
+                    console.error('复制邀请链接失败', err)
+                    toast.custom(() => (
+                      <div
+                        className="rounded-2xl bg-[#2a1f21] p-4 text-left text-white shadow-[0_12px_35px_rgba(0,0,0,0.45)]"
+                        style={toastContainerStyle}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F25F5C] text-white">
+                            <X className="h-5 w-5" strokeWidth={3} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-base font-semibold text-[#FCD635]">复制失败，请重试</div>
+                          </div>
+                        </div>
+                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className="toast-progress h-full w-full rounded-full bg-[#FCD635]"
+                            style={{ '--toast-progress-duration': '2500ms' } as CSSProperties}
+                          />
+                        </div>
+                      </div>
+                    ), { duration: 2500 })
                   }
                 }}
                 variant="yellow"
-                className="px-6 h-auto text-base"
+                className="h-11 flex-shrink-0 rounded-[1.75rem] px-6 text-base"
               >
                 复制
               </Button>
