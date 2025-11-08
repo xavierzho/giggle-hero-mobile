@@ -22,15 +22,21 @@ export function WalletCard() {
   const logout = useAuthStore((state) => state.logout)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [showDialog, setShowDialog] = useState(false)
-  const loginAttempted = useRef(false) // 使用 ref 避免重复触发
+  const prevConnectedRef = useRef(false) // 记录上一次的连接状态
 
-  // 钱包连接后自动触发登录流程
+  // 监听钱包连接状态变化，仅在从未连接变为已连接时触发登录
   useEffect(() => {
-    const autoLogin = async () => {
-      // 检查条件：已连接、有地址、未登录、未在登录中、未尝试过登录
-      if (isConnected && address && !userInfo && !isLoggingIn && !loginAttempted.current) {
-        console.log('🔐 钱包已连接，触发登录流程...', { address })
-        loginAttempted.current = true // 标记已尝试登录
+    const wasConnected = prevConnectedRef.current
+    const isNowConnected = isConnected
+
+    // 更新连接状态记录
+    prevConnectedRef.current = isNowConnected
+
+    // 只在状态从 false -> true 时触发登录
+    if (!wasConnected && isNowConnected && address && !userInfo && !isLoggingIn) {
+      console.log('🔐 钱包刚连接，触发登录流程...', { address })
+      
+      const autoLogin = async () => {
         setIsLoggingIn(true)
         
         try {
@@ -59,21 +65,20 @@ export function WalletCard() {
           setIsLoggingIn(false)
         }
       }
-    }
 
-    autoLogin()
+      autoLogin()
+    }
   }, [isConnected, address, userInfo, isLoggingIn, handleLogin, disconnect])
 
   // 钱包断开时清理用户信息和登录状态
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected && userInfo) {
       console.log('🔌 钱包已断开，清理用户信息')
       logout()
       setIsLoggingIn(false)
-      loginAttempted.current = false // 重置登录尝试标记
       toast.custom(() => <DisconnectToast />, { duration: 2000 })
     }
-  }, [isConnected, logout])
+  }, [isConnected, userInfo, logout])
 // ✅ 只有非空字符串才算有资格
   const eligible = !!(userInfo?.inviteCode && String(userInfo.inviteCode).trim().length > 0);
   const origin =
