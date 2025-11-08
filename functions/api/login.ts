@@ -18,7 +18,7 @@ export interface UserRow {
   inviter: string | null;   // 可能为空
   invite_code: string;
   created_at: string;       // ISO
-  balance: number;
+  balance?: number;
 }
 export interface CountRow {
   cnt: number;
@@ -88,12 +88,30 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const addrLower = address.toLowerCase();
 
+    // 检查 users 表是否存在 balance 字段（兼容旧 schema）
+    const columnInfo = await env.gigglehero
+      .prepare("PRAGMA table_info(users)")
+      .all<{ name: string }>();
+    const columnResults = columnInfo?.results ?? [];
+    const hasBalanceColumn = columnResults.some((col) => col.name === "balance");
+
     // 2) 查现有用户（强类型）
-    const userRow = await queryOne<UserRow>(
-      env.gigglehero,
-      "SELECT address, inviter, invite_code, created_at,balance FROM users WHERE address = ?",
-      [addrLower]
-    );
+    type UserRowBase = Pick<UserRow, "address" | "inviter" | "invite_code" | "created_at">;
+    let userRow: (UserRowBase & { balance?: number }) | null = null;
+
+    if (hasBalanceColumn) {
+      userRow = await queryOne<UserRow>(
+        env.gigglehero,
+        "SELECT address, inviter, invite_code, created_at, balance FROM users WHERE address = ?",
+        [addrLower]
+      );
+    } else {
+      userRow = await queryOne<UserRowBase>(
+        env.gigglehero,
+        "SELECT address, inviter, invite_code, created_at FROM users WHERE address = ?",
+        [addrLower]
+      );
+    }
 
     if (userRow) {
       // 已存在，统计下级数量（强类型）
@@ -104,7 +122,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
       // console.log(countRow);
       resp.count = countRow?.cnt ?? 0;
-      if ((userRow.inviter && isAddress(userRow.inviter)) || userRow.balance > 0) {
+      const existingBalance = Number(userRow.balance ?? 0);
+      if ((userRow.inviter && isAddress(userRow.inviter)) || existingBalance > 0) {
         resp.inviter = userRow.inviter as `0x${string}`;
         resp.inviteCode = userRow.invite_code
       }
@@ -131,28 +150,46 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     resp.isNew = true;
     let canInvite = false;
     let balance: bigint = 0n;
+    const tokenAddress = env.TOKEN as `0x${string}` | undefined;
     if (!inviter) {
-      balance = await evm.readContract({
-        abi: erc20abi,
-        address:env.TOKEN,
-        functionName: "balanceOf",
-        args: [addrLower],
-      }) as bigint;
-      if (balance >= parseEther('1')) {
-        canInvite = true;
+      if (!tokenAddress) {
+        console.warn('[login] 环境变量 TOKEN 缺失，跳过余额校验');
+      } else {
+        try {
+          balance = await evm.readContract({
+            abi: erc20abi,
+            address: tokenAddress,
+            functionName: "balanceOf",
+            args: [addrLower as `0x${string}`],
+          }) as bigint;
+          if (balance >= parseEther('1')) {
+            canInvite = true;
+          }
+        } catch (error) {
+          console.error('[login] 读取代币余额失败', error);
+        }
       }
-    }else {
+    } else {
       canInvite = true;
     }
     if (canInvite) {
       resp.inviteCode = newInviteCode;
       resp.inviter = inviter
     }
-    await exec(
-      env.gigglehero,
-      "INSERT INTO users (address, inviter, invite_code, created_at, balance) VALUES (?, ?, ?, ?, ?)",
-      [addrLower, inviter, newInviteCode, new Date().toISOString(), formatEther(balance)]
-    );
+
+    if (hasBalanceColumn) {
+      await exec(
+        env.gigglehero,
+        "INSERT INTO users (address, inviter, invite_code, created_at, balance) VALUES (?, ?, ?, ?, ?)",
+        [addrLower, inviter, newInviteCode, new Date().toISOString(), formatEther(balance)]
+      );
+    } else {
+      await exec(
+        env.gigglehero,
+        "INSERT INTO users (address, inviter, invite_code, created_at) VALUES (?, ?, ?, ?)",
+        [addrLower, inviter, newInviteCode, new Date().toISOString()]
+      );
+    }
     return json<LoginData>({
       code: 0,
       msg: "注册并登录成功",
