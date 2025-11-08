@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import initBg from '@/assets/init.png';
 import errorBg from '@/assets/error.png';
+import successBg from '@/assets/success.png';
 
 interface UserInfo {
   address: string;
   inviter: string | null;
-  inviteCode?: string;
+  inviteCode: string | null;
   count?: number;
 }
 
@@ -22,18 +23,29 @@ export const useAuthStore = create<AuthState>((set) => ({
   backgroundImage: initBg,
   
   setUserInfo: (userInfo) => {
-    set({ userInfo });
+    const normalizedUserInfo = userInfo
+      ? {
+          ...userInfo,
+          inviteCode: userInfo.inviteCode ?? null,
+        }
+      : null;
+
+    set({ userInfo: normalizedUserInfo });
     
-    // 如果 inviter 为 null,切换到错误背景
-    if (userInfo && userInfo.inviter === null) {
-      set({ backgroundImage: errorBg });
+    // 如果没有邀请资格（inviteCode 为空），切换到警示背景
+    if (normalizedUserInfo) {
+      if (normalizedUserInfo.inviteCode) {
+        set({ backgroundImage: successBg });
+      } else {
+        set({ backgroundImage: errorBg });
+      }
     } else {
       set({ backgroundImage: initBg });
     }
     
     // 同步到 localStorage
-    if (userInfo) {
-      localStorage.setItem('userInfo', JSON.stringify(userInfo));
+    if (normalizedUserInfo) {
+      localStorage.setItem('userInfo', JSON.stringify(normalizedUserInfo));
     } else {
       localStorage.removeItem('userInfo');
     }

@@ -58,8 +58,8 @@ interface LoginData {
   address: `0x${string}`;
   inviter: `0x${string}` | null;
   isNew: boolean;
-  count?: number;
-  inviteCode?: string;
+  count: number;
+  inviteCode: string | null;
 }
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const {request, env} = context;
@@ -73,7 +73,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       address: body.address.toLowerCase() as `0x${string}`,
       isNew: false,
       count: 0,
-      inviter: null
+      inviter: null,
+      inviteCode: null,
     }
     // 1) 验证签名（message 需与前端完全一致）
     const verified = await verifyMessage({
@@ -122,11 +123,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
       // console.log(countRow);
       resp.count = countRow?.cnt ?? 0;
-      const existingBalance = Number(userRow.balance ?? 0);
-      if ((userRow.inviter && isAddress(userRow.inviter)) || existingBalance > 0) {
-        resp.inviter = userRow.inviter as `0x${string}`;
-        resp.inviteCode = userRow.invite_code
-      }
+      const inviterAddress =
+        userRow.inviter && isAddress(userRow.inviter)
+          ? (userRow.inviter as `0x${string}`)
+          : null;
+      resp.inviter = inviterAddress;
+      resp.inviteCode = userRow.invite_code ?? null;
       return json<LoginData>({
         code: 0,
         msg: "登录成功",

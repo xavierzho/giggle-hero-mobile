@@ -62,8 +62,16 @@ export function WalletCard() {
   }, [isConnected, logout])
 // ✅ 只有非空字符串才算有资格
   const eligible = !!(userInfo?.inviteCode && String(userInfo.inviteCode).trim().length > 0);
+  const origin =
+    typeof window !== 'undefined' && window.location
+      ? window.location.origin
+      : 'https://gigglehero.io';
   const notConnected = !isConnected;
   const notEligible = isConnected && userInfo && !eligible;
+  const inviteLink =
+    eligible && userInfo?.inviteCode
+      ? `${origin.replace(/\/$/, '')}/${userInfo.inviteCode}`
+      : null;
   // 已连接且已登录(有 inviter)显示邀请信息
   if (isConnected && userInfo && eligible) {
     return (
@@ -94,17 +102,14 @@ export function WalletCard() {
                   background: 'rgba(255, 255, 255, 0.1)',
                 }}
               >
-                {userInfo.inviteCode}
+                {inviteLink ?? '--'}
               </div>
               <Button
                 onClick={() => {
-                  if (userInfo.inviteCode) {
-                    if (eligible) {
-                      const inviteUrl = `${window.location.origin}?invite=${userInfo!.inviteCode}`;
-                      navigator.clipboard.writeText(inviteUrl);
-                      // TODO: 显示复制成功提示
-                      console.log('复制邀请链接:', inviteUrl)
-                    }
+                  if (inviteLink) {
+                    navigator.clipboard.writeText(inviteLink);
+                    // TODO: 显示复制成功提示
+                    console.log('复制邀请链接:', inviteLink)
                   }
                 }}
                 variant="yellow"

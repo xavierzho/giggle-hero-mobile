@@ -23,8 +23,8 @@ export interface LoginData {
   address: `0x${string}`           // 用户地址
   inviter: `0x${string}` | null    // 邀请人地址
   isNew: boolean                   // 是否新用户
-  count?: number                   // 邀请人数
-  inviteCode?: string              // 用户的邀请码
+  count: number                    // 邀请人数
+  inviteCode: string | null        // 用户的邀请码，未开放则为 null
 }
 
 /** API 成功响应 */
