@@ -6,15 +6,15 @@ export function Banner() {
           {/* 第一行：奖励空投10% */}
           <div className="mb-[1.125rem]">
             <span 
-              className="text-[3.125rem] font-black tracking-wider leading-none inline-block"
+              className="text-[3.125rem] font-black tracking-wide leading-none inline-block text-[#E452DD]"
               style={{
-                background: 'linear-gradient(180deg, #E452DD 50%, #9D63FE 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                WebkitTextStroke: '0.125rem #FFFFFF',
-                paintOrder: 'stroke fill',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
+                textShadow: `
+                  0.03em 0 #FFFFFF,
+                  -0.03em 0 #FFFFFF,
+                  0 0.03em #FFFFFF,
+                  0 -0.03em #FFFFFF,
+                  0 0 0.12em rgba(0,0,0,0.2)
+                `,
               }}
             >
               奖励空投10%
@@ -24,15 +24,15 @@ export function Banner() {
           {/* 第二行：邀请好友 */}
           <div>
             <span 
-              className="text-[2.25rem] font-black tracking-wider leading-none inline-block"
+              className="text-[2.25rem] font-black tracking-wide leading-none inline-block text-[#99ED37]"
               style={{
-                background: 'linear-gradient(180deg, #99ED37 50%, #3CB11F 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                WebkitTextStroke: '0.125rem #5A2908',
-                paintOrder: 'stroke fill',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
+                textShadow: `
+                  0.03em 0 #5A2908,
+                  -0.03em 0 #5A2908,
+                  0 0.03em #5A2908,
+                  0 -0.03em #5A2908,
+                  0 0 0.1em rgba(0,0,0,0.25)
+                `,
               }}
             >
               邀请好友
