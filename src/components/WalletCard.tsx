@@ -1,17 +1,23 @@
-import { useEffect, useState, useRef, type CSSProperties } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useAccount, useDisconnect } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { toast } from 'sonner'
-import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useLogin } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
 import { QualificationDialog } from '@/components/QualificationDialog'
+import { 
+  CopyToastSuccess, 
+  CopyToastError, 
+  ConnectSuccessToast, 
+  ConnectErrorToast, 
+  DisconnectToast 
+} from '@/components/CopyToast'
 
 export function WalletCard() {
   const { isConnected, address } = useAccount()
   const { disconnect } = useDisconnect()
-  const { handleLogin, loading, error } = useLogin()
+  const { handleLogin, loading } = useLogin()
   const userInfo = useAuthStore((state) => state.userInfo)
   const logout = useAuthStore((state) => state.logout)
   const [isLoggingIn, setIsLoggingIn] = useState(false)
@@ -26,24 +32,29 @@ export function WalletCard() {
         console.log('🔐 钱包已连接，触发登录流程...', { address })
         loginAttempted.current = true // 标记已尝试登录
         setIsLoggingIn(true)
-
+        
         try {
           // 获取 URL 中的邀请码
           const params = new URLSearchParams(window.location.search)
           const inviteCode = params.get('invite')
-
+          
           if (inviteCode) {
             console.log('📨 检测到邀请码:', inviteCode)
           }
-
+          
           console.log('🚀 开始调用 handleLogin...')
-
+          
           // 弹出签名确认 (handleLogin 内部会自动调用 store.setUserInfo)
           await handleLogin(inviteCode || undefined)
+          
+          // 登录成功提示
+          toast.custom(() => <ConnectSuccessToast />, { duration: 2000 })
         } catch (err) {
           console.error('❌ 登录过程出错:', err)
-          // 出错时断开钱包
+          // 出错时断开钱包并显示错误提示
           disconnect()
+          const errorMsg = err instanceof Error ? err.message : '登录失败'
+          toast.custom(() => <ConnectErrorToast message={errorMsg} />, { duration: 3000 })
         } finally {
           setIsLoggingIn(false)
         }
@@ -60,6 +71,7 @@ export function WalletCard() {
       logout()
       setIsLoggingIn(false)
       loginAttempted.current = false // 重置登录尝试标记
+      toast.custom(() => <DisconnectToast />, { duration: 2000 })
     }
   }, [isConnected, logout])
 // ✅ 只有非空字符串才算有资格
@@ -74,9 +86,6 @@ export function WalletCard() {
     eligible && userInfo?.inviteCode
       ? `${origin.replace(/\/$/, '')}/${userInfo.inviteCode}`
       : null;
-  const toastContainerStyle: CSSProperties = {
-    width: 'min(420px, calc(100vw - 2.5rem))',
-  }
   // 已连接且已登录(有 inviter)显示邀请信息
   if (isConnected && userInfo && eligible) {
     return (
@@ -111,51 +120,10 @@ export function WalletCard() {
                   if (!inviteLink) return
                   try {
                     await navigator.clipboard.writeText(inviteLink)
-                    toast.custom(() => (
-                      <div
-                        className="rounded-2xl bg-[#1f222c] p-4 text-left text-white shadow-[0_12px_35px_rgba(0,0,0,0.45)]"
-                        style={toastContainerStyle}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2fbf71] text-white">
-                            <Check className="h-5 w-5" strokeWidth={3} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-base font-semibold">邀请链接已复制</div>
-                            <div className="mt-1 truncate text-xs text-white/65">{inviteLink}</div>
-                          </div>
-                        </div>
-                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
-                          <div
-                            className="toast-progress h-full w-full rounded-full bg-[#FCD635]"
-                            style={{ '--toast-progress-duration': '2800ms' } as CSSProperties}
-                          />
-                        </div>
-                      </div>
-                    ), { duration: 2800 })
+                    toast.custom(() => <CopyToastSuccess link={inviteLink} />, { duration: 2800 })
                   } catch (err) {
                     console.error('复制邀请链接失败', err)
-                    toast.custom(() => (
-                      <div
-                        className="rounded-2xl bg-[#2a1f21] p-4 text-left text-white shadow-[0_12px_35px_rgba(0,0,0,0.45)]"
-                        style={toastContainerStyle}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F25F5C] text-white">
-                            <X className="h-5 w-5" strokeWidth={3} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-base font-semibold text-[#FCD635]">复制失败，请重试</div>
-                          </div>
-                        </div>
-                        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/10">
-                          <div
-                            className="toast-progress h-full w-full rounded-full bg-[#FCD635]"
-                            style={{ '--toast-progress-duration': '2500ms' } as CSSProperties}
-                          />
-                        </div>
-                      </div>
-                    ), { duration: 2500 })
+                    toast.custom(() => <CopyToastError />, { duration: 2500 })
                   }
                 }}
                 variant="yellow"
@@ -163,29 +131,6 @@ export function WalletCard() {
               >
                 复制
               </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // 显示错误提示
-  if (error) {
-    return (
-      <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
-        <div className="container mx-auto max-w-2xl">
-          <div
-            className="rounded-[1.5rem] p-6 shadow-2xl"
-            style={{
-              background: 'linear-gradient(180deg, rgba(24, 26, 33, 0.95) 0%, rgba(24, 26, 33, 0.98) 100%)',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <div className="text-center mb-4">
-              <p className="text-red-500 text-lg font-semibold">
-                {error}
-              </p>
             </div>
           </div>
         </div>

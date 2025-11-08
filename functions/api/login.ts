@@ -148,12 +148,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // 4) 写入新用户（生成新邀请码）
-    const newInviteCode = crypto.randomUUID().slice(0, 8);
     resp.isNew = true;
     let canInvite = false;
     let balance: bigint = 0n;
     const tokenAddress = env.TOKEN as `0x${string}` | undefined;
+    
+    // 判断是否有资格获得邀请码
     if (!inviter) {
+      // 没有邀请人，需要检查余额
       if (!tokenAddress) {
         console.warn('[login] 环境变量 TOKEN 缺失，跳过余额校验');
       } else {
@@ -172,11 +174,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         }
       }
     } else {
+      // 有邀请人，直接有资格
       canInvite = true;
     }
+    
+    // 只有有资格的用户才生成邀请码
+    const newInviteCode = canInvite ? crypto.randomUUID().slice(0, 8) : null;
+    
     if (canInvite) {
       resp.inviteCode = newInviteCode;
-      resp.inviter = inviter
+      resp.inviter = inviter;
     }
 
     if (hasBalanceColumn) {
@@ -203,6 +210,5 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       500
     );
   }
-
 
 }

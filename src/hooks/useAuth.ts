@@ -11,21 +11,18 @@ export function useLogin() {
   const { signMessageAsync } = useSignMessage()
   const { disconnect } = useDisconnect()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   /**
    * 执行登录
    * @param inviteCode 可选的邀请码
-   * @returns 登录结果，失败时返回 null
+   * @returns 登录结果，失败时抛出错误
    */
   const handleLogin = useCallback(async (inviteCode?: string) => {
     if (!address) {
-      setError('请先连接钱包')
-      return null
+      throw new Error('请先连接钱包')
     }
 
     setLoading(true)
-    setError(null)
 
     try {
       // 稍微延迟,确保钱包连接稳定
@@ -47,15 +44,12 @@ export function useLogin() {
         console.log('⏳ 调用 signMessageAsync...')
         signature = await signMessageAsync({ message })
         console.log('✅ 签名成功:', signature)
-      } catch (signError: any) {
+      } catch (signError: unknown) {
         // 用户取消签名或签名失败
         console.error('❌ 签名失败:', signError)
-        console.error('错误类型:', signError?.name)
-        console.error('错误消息:', signError?.message)
-        
         disconnect()
-        setError(signError?.message || '用户取消签名')
-        return null
+        const errorMsg = signError instanceof Error ? signError.message : '用户取消签名'
+        throw new Error(errorMsg)
       }
 
       // 4. 调用登录 API
@@ -72,13 +66,6 @@ export function useLogin() {
         const loginData = (response as { data: LoginData }).data
         console.log('✅ 登录成功:', loginData)
         
-        // 开发环境：如果 inviter 为 null，设置测试数据
-        // if (import.meta.env.DEV && loginData.inviter === null) {
-        //   loginData.inviter = '0xabcdefabcdefabcdefabcdefabcdefabcdefabcd' as `0x${string}`
-        //   loginData.inviteCode = loginData.inviteCode || 'DEV12345'
-        //   console.log('🔧 开发环境：已设置测试 inviter')
-        // }
-        
         // 保存到 store (会自动处理 localStorage 和背景图片)
         useAuthStore.getState().setUserInfo(loginData)
         
@@ -86,16 +73,12 @@ export function useLogin() {
       } else {
         // API 返回错误
         console.error('❌ 登录失败:', response.msg)
-        setError(response.msg)
         disconnect()
-        return null
+        throw new Error(response.msg)
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : '登录失败'
-      setError(errorMsg)
-      console.error('❌ 登录错误:', err)
       disconnect()
-      return null
+      throw err
     } finally {
       setLoading(false)
     }
@@ -104,7 +87,6 @@ export function useLogin() {
   return {
     handleLogin,
     loading,
-    error,
   }
 }
 
