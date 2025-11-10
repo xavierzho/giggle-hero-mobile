@@ -89,7 +89,7 @@ export function WalletCard() {
   const notEligible = isConnected && userInfo && !eligible;
   const inviteLink =
     eligible && userInfo?.inviteCode
-      ? `${origin.replace(/\/$/, '')}/${userInfo.inviteCode}`
+      ? `${origin.replace(/\/$/, '')}?inviteCode=${userInfo.inviteCode}`
       : null;
   // 已连接且已登录(有 inviter)显示邀请信息
   if (isConnected && userInfo && eligible) {
