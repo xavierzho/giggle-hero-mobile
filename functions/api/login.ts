@@ -95,7 +95,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       "SELECT address, inviter, invite_code, created_at,balance FROM users WHERE address = ?",
       [addrLower]
     );
-
+    // 3) 新用户：通过邀请码查邀请人
+    let inviter: `0x${string}` | null = null;
+    if (inviteCode) {
+      const inviterRow = await queryOne<Pick<UserRow, "address">>(
+        env.gigglehero,
+        "SELECT address FROM users WHERE invite_code = ?",
+        [inviteCode]
+      );
+      inviter = inviterRow ? inviterRow.address.toLowerCase() as `0x${string}`: null;
+    }
     if (userRow) {
       // 已存在，统计下级数量（强类型）
       const countRow = await queryOne<CountRow>(
@@ -105,6 +114,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
       // console.log(countRow);
       resp.count = countRow?.cnt ?? 0;
+      if (!userRow.inviter && inviteCode) {
+        await exec(env.gigglehero,`update users set inviter = ? where address = ?`, [inviter, addrLower])
+        userRow.inviter = inviter;
+      }
       if ((userRow.inviter && isAddress(userRow.inviter)) || userRow.balance > 0) {
         resp.inviter = userRow.inviter as `0x${string}`;
         resp.inviteCode = userRow.invite_code
@@ -116,16 +129,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // 3) 新用户：通过邀请码查邀请人
-    let inviter: `0x${string}` | null = null;
-    if (inviteCode) {
-      const inviterRow = await queryOne<Pick<UserRow, "address">>(
-        env.gigglehero,
-        "SELECT address FROM users WHERE invite_code = ?",
-        [inviteCode]
-      );
-      inviter = inviterRow ? inviterRow.address.toLowerCase() as `0x${string}`: null;
-    }
+
 
     // 4) 写入新用户（生成新邀请码）
     const newInviteCode = crypto.randomUUID().slice(0, 8);
