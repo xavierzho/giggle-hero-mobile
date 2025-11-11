@@ -1,6 +1,12 @@
 export function ActivityRules() {
   return (
-    <div className="fixed inset-x-0 top-[7.5rem] bottom-[6.5rem] z-20 overflow-y-auto bg-brand-dark text-lg">
+    <div
+      className="fixed inset-x-0 z-20 overflow-y-auto bg-brand-dark text-lg"
+      style={{
+        top: 'calc(var(--safe-area-top) + 7.5rem)',
+        bottom: 'calc(var(--safe-area-bottom) + 6.5rem)',
+      }}
+    >
       <div className="mx-auto max-w-2xl px-6 pb-16">
         <header className="mb-12 pt-6 text-center">
           <h1 className="text-[2.375rem] font-black tracking-[0.3em] text-white">活动规则</h1>

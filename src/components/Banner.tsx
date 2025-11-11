@@ -1,6 +1,9 @@
 export function Banner() {
   return (
-    <div className="fixed left-0 right-0 z-40 top-[4.9375rem] px-4 mt-[3.5rem]">
+    <div
+      className="fixed left-0 right-0 z-40 px-4 mt-[3.5rem]"
+      style={{ top: 'calc(var(--safe-area-top) + 4.9375rem)' }}
+    >
       <div className="container mx-auto">
         <div className="flex flex-col items-start">
           {/* 第一行：奖励空投10% */}

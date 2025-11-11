@@ -94,7 +94,10 @@ export function WalletCard() {
   // 已连接且已登录(有 inviter)显示邀请信息
   if (isConnected && userInfo && eligible) {
     return (
-      <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
+      <div
+        className="fixed left-0 right-0 z-30 px-4 pb-4"
+        style={{ bottom: 'calc(var(--safe-area-bottom) + 6.25rem)' }}
+      >
         <div className="container mx-auto max-w-2xl">
           <div
             className="rounded-[1.5rem] p-6 shadow-2xl"
@@ -144,7 +147,10 @@ export function WalletCard() {
   }
 
   return (
-    <div className="fixed bottom-[6.25rem] left-0 right-0 z-30 px-4 pb-4">
+    <div
+      className="fixed left-0 right-0 z-30 px-4 pb-4"
+      style={{ bottom: 'calc(var(--safe-area-bottom) + 6.25rem)' }}
+    >
       <div className="container mx-auto max-w-2xl">
         <div
           className="rounded-[1.5rem] p-6 shadow-2xl"

@@ -17,7 +17,13 @@ export function MinePage() {
   const inviteCount = userInfo?.count ?? 0;
 
   return (
-    <div className="fixed inset-x-0 top-[7.5rem] bottom-[6.5rem] z-30 overflow-y-auto text-lg">
+    <div
+      className="fixed inset-x-0 z-30 overflow-y-auto text-lg"
+      style={{
+        top: 'calc(var(--safe-area-top) + 7.5rem)',
+        bottom: 'calc(var(--safe-area-bottom) + 6.5rem)',
+      }}
+    >
       <div className="container mx-auto h-full px-6 py-6">
         <div className="flex flex-col gap-6">
           <section className="rounded-[2rem] border border-white/10 bg-[rgba(24,26,33,0.88)] p-6 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl">

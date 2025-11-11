@@ -3,7 +3,13 @@ import logo from '@/assets/logo.png'
 
 export function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-transparent py-3 px-4">
+    <nav
+      className="fixed top-0 left-0 right-0 z-50 bg-transparent px-4"
+      style={{
+        paddingTop: 'calc(var(--safe-area-top) + 0.75rem)',
+        paddingBottom: '0.75rem',
+      }}
+    >
       <div className="container mx-auto flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
