@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button'
 import { useLogin } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/useAuthStore'
 import { QualificationDialog } from '@/components/QualificationDialog'
-import { 
-  CopyToastSuccess, 
-  CopyToastError, 
-  ConnectSuccessToast, 
-  ConnectErrorToast, 
-  DisconnectToast 
+import {
+  CopyToastSuccess,
+  CopyToastError,
+  ConnectSuccessToast,
+  ConnectErrorToast,
+  DisconnectToast
 } from '@/components/CopyToast'
 
 export function WalletCard() {
@@ -35,24 +35,24 @@ export function WalletCard() {
     // 只在状态从 false -> true 时触发登录
     if (!wasConnected && isNowConnected && address && !userInfo && !isLoggingIn) {
       console.log('🔐 钱包刚连接，触发登录流程...', { address })
-      
+
       const autoLogin = async () => {
         setIsLoggingIn(true)
-        
+
         try {
           // 获取 URL 中的邀请码
           const params = new URLSearchParams(window.location.search)
           const inviteCode = params.get('invite')
-          
+
           if (inviteCode) {
             console.log('📨 检测到邀请码:', inviteCode)
           }
-          
+
           console.log('🚀 开始调用 handleLogin...')
-          
+
           // 弹出签名确认 (handleLogin 内部会自动调用 store.setUserInfo)
           await handleLogin(inviteCode || undefined)
-          
+
           // 登录成功提示
           toast.custom(() => <ConnectSuccessToast />, { duration: 2000 })
         } catch (err) {
@@ -89,7 +89,7 @@ export function WalletCard() {
   const notEligible = isConnected && userInfo && !eligible;
   const inviteLink =
     eligible && userInfo?.inviteCode
-      ? `${origin.replace(/\/$/, '')}?inviteCode=${userInfo.inviteCode}`
+      ? `${origin.replace(/\/$/, '')}?invite=${userInfo.inviteCode}`
       : null;
   // 已连接且已登录(有 inviter)显示邀请信息
   if (isConnected && userInfo && eligible) {
