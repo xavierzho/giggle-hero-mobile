@@ -26,7 +26,6 @@ export function WalletCard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false)
   const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false)
   const [showDialog, setShowDialog] = useState(false)
-  const loginAttemptedRef = useRef(false)
   const hasAttemptedSwitchRef = useRef(false)
   const chainModalRef = useRef<(() => void) | null>(null)
   const chainModalOpenedRef = useRef(false)
@@ -44,6 +43,36 @@ export function WalletCard() {
       }, 0)
     }
   }, [])
+
+  const manualLogin = useCallback(async () => {
+    if (!address || isLoggingIn) {
+      return
+    }
+
+    setIsLoggingIn(true)
+
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const inviteCodeParam = params.get('inviteCode') ?? params.get('invite')
+
+      if (inviteCodeParam) {
+        console.log('📨 检测到邀请码:', inviteCodeParam)
+      }
+
+      console.log('🚀 开始调用 handleLogin...')
+
+      await handleLogin(inviteCodeParam || undefined)
+
+      toast.custom(() => <ConnectSuccessToast />, { duration: 2000 })
+    } catch (err) {
+      console.error('❌ 登录过程出错:', err)
+      disconnect()
+      const errorMsg = err instanceof Error ? err.message : '登录失败'
+      toast.custom(() => <ConnectErrorToast message={errorMsg} />, { duration: 3000 })
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }, [address, handleLogin, disconnect, isLoggingIn])
 
   // 检查并强制切换到 BSC 网络
   useEffect(() => {
@@ -95,71 +124,9 @@ export function WalletCard() {
     enforceChain()
   }, [isConnected, chainId, switchChainAsync, showManualSwitchPrompt])
 
-  // 监听钱包连接状态变化，仅在满足条件时触发登录
-  useEffect(() => {
-    if (!isConnected || !address) {
-      loginAttemptedRef.current = false
-      return
-    }
-
-    if (chainId != null && chainId !== bsc.id) {
-      return
-    }
-
-    if (isSwitchingNetwork || isSwitchingChain) {
-      return
-    }
-
-    if (userInfo || isLoggingIn || loginAttemptedRef.current) {
-      return
-    }
-
-    loginAttemptedRef.current = true
-
-    const autoLogin = async () => {
-      setIsLoggingIn(true)
-
-      try {
-        const params = new URLSearchParams(window.location.search)
-        const inviteCodeParam = params.get('inviteCode') ?? params.get('invite')
-
-        if (inviteCodeParam) {
-          console.log('📨 检测到邀请码:', inviteCodeParam)
-        }
-
-        console.log('🚀 开始调用 handleLogin...')
-
-        await handleLogin(inviteCodeParam || undefined)
-
-        toast.custom(() => <ConnectSuccessToast />, { duration: 2000 })
-      } catch (err) {
-        console.error('❌ 登录过程出错:', err)
-        disconnect()
-        const errorMsg = err instanceof Error ? err.message : '登录失败'
-        toast.custom(() => <ConnectErrorToast message={errorMsg} />, { duration: 3000 })
-      } finally {
-        setIsLoggingIn(false)
-        loginAttemptedRef.current = false
-      }
-    }
-
-    autoLogin()
-  }, [
-    isConnected,
-    address,
-    chainId,
-    userInfo,
-    isLoggingIn,
-    isSwitchingNetwork,
-    isSwitchingChain,
-    handleLogin,
-    disconnect,
-  ])
-
   // 钱包断开时清理用户信息和登录状态
   useEffect(() => {
     if (!isConnected) {
-      loginAttemptedRef.current = false
       hasAttemptedSwitchRef.current = false
       chainModalOpenedRef.current = false
       switchChainToastShownRef.current = false
@@ -182,6 +149,7 @@ export function WalletCard() {
   const wrongChain = isConnected && chainId != null && chainId !== bsc.id
   const switchingChain = isSwitchingNetwork || isSwitchingChain
   const notConnected = !isConnected
+  const needsLogin = isConnected && !wrongChain && !userInfo
   const notEligible = isConnected && !wrongChain && userInfo && !eligible
   const inviteLink =
     eligible && userInfo?.inviteCode
@@ -191,6 +159,7 @@ export function WalletCard() {
     if (notConnected) return '#FCD635'
     if (wrongChain) return '#F97950'
     if (switchingChain) return '#FCD635'
+    if (needsLogin) return '#FCD635'
     if (notEligible) return '#F97950'
     return '#89E333'
   })()
@@ -198,12 +167,14 @@ export function WalletCard() {
     if (notConnected) return '连接钱包后生成邀请链接！'
     if (wrongChain) return '请切换至 BSC 链后重试'
     if (switchingChain) return '正在切换至 BSC 网络...'
+    if (needsLogin) return '点击按钮完成授权，即可生成邀请链接'
     if (loading || isLoggingIn) return '正在请求签名授权...'
     if (notEligible) return '⚠️ 很抱歉～您还未满足需求！⚠️'
     return '🎉 恭喜您～获得邀请好友资格！'
   })()
   const secondaryMessage = (() => {
     if (switchingChain) return '请在钱包中确认网络切换'
+    if (needsLogin) return '授权后将弹出钱包签名确认'
     if (loading || isLoggingIn) return '请在钱包中确认签名'
     return null
   })()
@@ -211,6 +182,7 @@ export function WalletCard() {
     if (notConnected) return '连接钱包'
     if (switchingChain) return '切换中...'
     if (wrongChain) return '切换到BSC'
+    if (needsLogin) return '完成授权'
     if (notEligible) return '获取资格'
     if (loading || isLoggingIn) return '授权中...'
     return '已连接'
@@ -242,6 +214,11 @@ export function WalletCard() {
       chainModalOpenedRef.current = false
       switchChainToastShownRef.current = false
       showManualSwitchPrompt()
+      return
+    }
+
+    if (needsLogin) {
+      await manualLogin()
       return
     }
 
