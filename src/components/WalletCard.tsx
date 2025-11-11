@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useAccount, useDisconnect, useChainId, useSwitchChain } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { toast } from 'sonner'
@@ -28,11 +28,29 @@ export function WalletCard() {
   const [showDialog, setShowDialog] = useState(false)
   const loginAttemptedRef = useRef(false)
   const hasAttemptedSwitchRef = useRef(false)
+  const chainModalRef = useRef<(() => void) | null>(null)
+  const chainModalOpenedRef = useRef(false)
+  const switchChainToastShownRef = useRef(false)
+  const showManualSwitchPrompt = useCallback(() => {
+    if (!switchChainToastShownRef.current) {
+      toast.custom(() => <ConnectErrorToast message="请在钱包中切换到 BSC 网络后继续" />, { duration: 3000 })
+      switchChainToastShownRef.current = true
+    }
+
+    if (!chainModalOpenedRef.current) {
+      chainModalOpenedRef.current = true
+      setTimeout(() => {
+        chainModalRef.current?.()
+      }, 0)
+    }
+  }, [])
 
   // 检查并强制切换到 BSC 网络
   useEffect(() => {
     if (!isConnected) {
       hasAttemptedSwitchRef.current = false
+      chainModalOpenedRef.current = false
+      switchChainToastShownRef.current = false
       setIsSwitchingNetwork(false)
       return
     }
@@ -43,6 +61,8 @@ export function WalletCard() {
 
     if (chainId === bsc.id) {
       hasAttemptedSwitchRef.current = false
+      chainModalOpenedRef.current = false
+      switchChainToastShownRef.current = false
       setIsSwitchingNetwork(false)
       return
     }
@@ -53,6 +73,12 @@ export function WalletCard() {
 
     hasAttemptedSwitchRef.current = true
 
+    if (!switchChainAsync) {
+      showManualSwitchPrompt()
+      setIsSwitchingNetwork(false)
+      return
+    }
+
     const enforceChain = async () => {
       setIsSwitchingNetwork(true)
 
@@ -60,15 +86,14 @@ export function WalletCard() {
         await switchChainAsync({ chainId: bsc.id })
       } catch (error) {
         console.error('❌ 切换到 BSC 网络失败:', error)
-        toast.custom(() => <ConnectErrorToast message="请在钱包中切换到 BSC 网络后重新连接" />, { duration: 3000 })
-        disconnect()
+        showManualSwitchPrompt()
       } finally {
         setIsSwitchingNetwork(false)
       }
     }
 
     enforceChain()
-  }, [isConnected, chainId, switchChainAsync, disconnect])
+  }, [isConnected, chainId, switchChainAsync, showManualSwitchPrompt])
 
   // 监听钱包连接状态变化，仅在满足条件时触发登录
   useEffect(() => {
@@ -136,6 +161,8 @@ export function WalletCard() {
     if (!isConnected) {
       loginAttemptedRef.current = false
       hasAttemptedSwitchRef.current = false
+      chainModalOpenedRef.current = false
+      switchChainToastShownRef.current = false
       setIsSwitchingNetwork(false)
 
       if (userInfo) {
@@ -188,7 +215,7 @@ export function WalletCard() {
     if (loading || isLoggingIn) return '授权中...'
     return '已连接'
   })()
-  const handlePrimaryAction = async (openConnectModal: () => void) => {
+  const handlePrimaryAction = async (openConnectModal: () => void, openChainModal?: () => void) => {
     if (notConnected) {
       openConnectModal()
       return
@@ -199,13 +226,22 @@ export function WalletCard() {
     }
 
     if (wrongChain) {
-      try {
-        await switchChainAsync({ chainId: bsc.id })
-      } catch (error) {
-        console.error('❌ 切换到 BSC 网络失败:', error)
-        toast.custom(() => <ConnectErrorToast message="请在钱包中手动切换到 BSC 网络" />, { duration: 3000 })
-        disconnect()
+      if (switchChainAsync) {
+        try {
+          await switchChainAsync({ chainId: bsc.id })
+          return
+        } catch (error) {
+          console.error('❌ 切换到 BSC 网络失败:', error)
+        }
       }
+
+      if (openChainModal) {
+        chainModalRef.current = openChainModal
+      }
+
+      chainModalOpenedRef.current = false
+      switchChainToastShownRef.current = false
+      showManualSwitchPrompt()
       return
     }
 
@@ -294,16 +330,20 @@ export function WalletCard() {
 
           {/* 连接钱包按钮 */}
           <ConnectButton.Custom>
-            {({ openConnectModal }) => (
-              <Button
-                onClick={() => handlePrimaryAction(openConnectModal)}
-                variant="yellow"
-                className="w-full h-14 text-lg"
-                disabled={loading || isLoggingIn || switchingChain}
-              >
-                {buttonLabel}
-              </Button>
-            )}
+            {({ openConnectModal, openChainModal }) => {
+              chainModalRef.current = openChainModal
+
+              return (
+                <Button
+                  onClick={() => handlePrimaryAction(openConnectModal, openChainModal)}
+                  variant="yellow"
+                  className="w-full h-14 text-lg"
+                  disabled={loading || isLoggingIn || switchingChain}
+                >
+                  {buttonLabel}
+                </Button>
+              )
+            }}
           </ConnectButton.Custom>
         </div>
       </div>

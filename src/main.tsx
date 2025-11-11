@@ -6,6 +6,7 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import type { Theme } from '@rainbow-me/rainbowkit'
 import { config } from './config/wagmi'
 import { Toaster } from 'sonner'
+import { bsc } from 'wagmi/chains'
 
 import '@rainbow-me/rainbowkit/styles.css'
 import './index.css'
@@ -38,6 +39,7 @@ createRoot(document.getElementById('root')!).render(
         <RainbowKitProvider
           theme={customTheme}
           modalSize="compact"
+          initialChain={bsc}
         >
           <App />
           <Toaster
