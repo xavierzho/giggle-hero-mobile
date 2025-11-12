@@ -23,6 +23,35 @@ export interface UserRow {
 export interface CountRow {
   cnt: number;
 }
+interface TableInfoRow {
+  name: string;
+}
+let ensureUsersTablePromise: Promise<void> | null = null;
+async function ensureUsersTable(db: D1Database) {
+  if (!ensureUsersTablePromise) {
+    ensureUsersTablePromise = (async () => {
+      try {
+        const tableInfo = await db.prepare("PRAGMA table_info(users)").all<TableInfoRow>();
+        const columns = tableInfo.results ?? [];
+        if (columns.length === 0) {
+          await db.prepare(
+            "CREATE TABLE IF NOT EXISTS users (address TEXT PRIMARY KEY, inviter TEXT, invite_code TEXT, created_at TEXT, balance REAL DEFAULT 0)"
+          ).run();
+          await db.prepare("CREATE INDEX IF NOT EXISTS idx_users_invite_code ON users(invite_code)").run();
+          await db.prepare("CREATE INDEX IF NOT EXISTS idx_users_inviter ON users(inviter)").run();
+        } else if (!columns.some((col) => col.name === "balance")) {
+          await db.prepare("ALTER TABLE users ADD COLUMN balance REAL DEFAULT 0").run();
+          await db.prepare("UPDATE users SET balance = 0 WHERE balance IS NULL").run();
+        }
+      } catch (schemaErr) {
+        console.error("[schema] ensure users table failed", schemaErr);
+        ensureUsersTablePromise = null;
+        throw schemaErr;
+      }
+    })();
+  }
+  return ensureUsersTablePromise;
+}
 /** ==== D1 查询工具（强类型） ==== */
 async function queryOne<T>(
   db: D1Database,
@@ -88,6 +117,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const addrLower = address.toLowerCase();
+
+    await ensureUsersTable(env.gigglehero);
 
     // 2) 查现有用户（强类型）
     const userRow = await queryOne<UserRow>(
